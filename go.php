@@ -6,6 +6,9 @@ function get(){
 }
 
 class prankcall{ 
+    // Declare the property
+    private $number;
+    
     public function __construct($no){ 
         $this->number = $no; 
     } 
@@ -55,7 +58,6 @@ class prankcall{
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
         
         $x = curl_exec($ch); 
-        // curl_close() removed - no longer needed in PHP 8.0+
         
         $ekse = json_decode($x,true); 
         if(empty($ekse['challengeID'])){ 
@@ -91,7 +93,6 @@ class prankcall{
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             
             $x = curl_exec($ch); 
-            // curl_close() removed
             
             $ekse = json_decode($x,true); 
             if(!empty($ekse['challengeID'])){ 
